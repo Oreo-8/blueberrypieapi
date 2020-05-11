@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.blueberrypieapi.mapper.CommentMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.example.blueberrypieapi.entity.Comment">
+        <id column="id" property="id" />
+        <result column="blog_id" property="blogId" />
+        <result column="user_id" property="userId" />
+        <result column="content" property="content" />
+        <result column="create_time" property="createTime" />
+        <result column="delete_state" property="deleteState" />
+        <result column="user_name" property="userName"/>
+        <result column="image_path" property="imagePath"/>
+        <collection property="replies"
+                    ofType="com.example.blueberrypieapi.entity.Reply"
+                    javaType="java.util.ArrayList"
+                    select="com.example.blueberrypieapi.mapper.ReplyMapper.getReplyByComment"
+                    column="id=id">
+        </collection>
+    </resultMap>
+
+    <select id="getComment" resultMap="BaseResultMap">
+        SELECT
+            c.*,
+            u.user_name,
+            u.image_path
+        FROM
+            `comment` c
+            LEFT JOIN `user` u ON c.user_id = u.user_id
+        WHERE
+            c.blog_id = #{id}
+        ORDER BY
+	        c.create_time ASC
+    </select>
+
+</mapper>

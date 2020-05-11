@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.blueberrypieapi.mapper.UserMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.example.blueberrypieapi.entity.User">
+        <id column="user_id" property="userId" />
+        <result column="user_name" property="userName" />
+        <result column="user_password" property="userPassword" />
+        <result column="user_mail" property="userMail" />
+        <result column="user_state" property="userState" />
+        <result column="delete_state" property="deleteState" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="image_path" property="imagePath" />
+        <result column="introduction" property="Introduction"/>
+        <result column="count" property="count"/>
+    </resultMap>
+
+    <select id="getIdByName" resultType="Integer">
+        SELECT user_id FROM user WHERE user_name=#{name}
+    </select>
+
+    <select id="getUserDtl" resultMap="BaseResultMap">
+        SELECT
+            u.user_id,
+            u.user_name,
+            u.user_mail,
+            u.image_path,
+            u.introduction,
+            u.create_time,
+            u.user_state,
+            ( SELECT count( * ) FROM blog WHERE user_id = u.user_id ) AS count
+        FROM
+            `user` u
+        WHERE
+            u.user_name = #{name}
+    </select>
+
+    <select id="getAllUserPage" resultMap="BaseResultMap">
+        SELECT
+            u.user_id,
+            u.user_name,
+            u.user_mail,
+            u.image_path,
+            u.create_time,
+            u.update_time,
+            u.user_state,
+            ( SELECT count( * ) FROM blog WHERE user_id = u.user_id ) AS count
+        FROM
+            `user` u
+        <where>
+            <if test="user.userName != null and user.userName != ''">
+                <bind name="userName" value="'%'+user.userName+'%'"/>
+                and u.user_namelike #{userName}
+            </if>
+            <if test="user.userMail != null and user.userMail != ''">
+                and u.user_mail = user.userMail
+            </if>
+        </where>
+        order BY u.create_time desc
+    </select>
+
+</mapper>

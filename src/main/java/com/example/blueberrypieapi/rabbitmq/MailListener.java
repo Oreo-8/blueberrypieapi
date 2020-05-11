@@ -1,0 +1,51 @@
+package com.example.blueberrypieapi.rabbitmq;
+
+import com.example.blueberrypieapi.config.MailConfig;
+import com.example.blueberrypieapi.config.RabbitMqConfig;
+import com.example.blueberrypieapi.utils.MailMessage;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitHandler;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.stereotype.Component;
+
+import java.util.Map;
+
+/**
+ * 发送邮件的队列消费者
+ */
+@Component
+@RabbitListener(queues = RabbitMqConfig.MAIL_QUEUE)
+@Slf4j
+@AllArgsConstructor
+public class MailListener {
+
+    private final JavaMailSender mailSender;
+
+    private final MailMessage mailMessage;
+
+    @RabbitHandler
+    public void executeSms(Map<String, String> map) {
+        String mail = map.get("mail");
+        String code = map.get("code");
+
+        try {
+            this.sendMail(mail, code);
+            log.info(mail + "-" + code + "-发送成功");
+        } catch (Exception e) {
+            log.error(mail + code + "发送失败-" + e.getMessage());
+        }
+    }
+
+    private void sendMail(String mail, String code) {
+        //发送邮件
+        mailSender.send(mailMessage
+                .create(mail, "邮箱验证码", "邮箱验证码：" + code + "，" + MailConfig.EXPIRED_TIME + "分钟内有效"));
+
+
+    }
+
+}

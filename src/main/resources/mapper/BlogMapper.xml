@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.blueberrypieapi.mapper.BlogMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.example.blueberrypieapi.entity.Blog">
+        <id column="id" property="id" />
+        <result column="title" property="title" />
+        <result column="body" property="body" />
+        <result column="user_id" property="userId" />
+        <result column="discuss_count" property="discussCount" />
+        <result column="views" property="views" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="delete_state" property="deleteState" />
+        <result column="user_name" property="userName"/>
+        <result column="image_path" property="imagePath"/>
+        <collection property="tags"
+                    ofType="com.example.blueberrypieapi.entity.Tag"
+                    javaType="java.util.ArrayList"
+                    select="com.example.blueberrypieapi.mapper.TagMapper.getTagByBlog"
+                    column="bid=id">
+        </collection>
+    </resultMap>
+
+    <select id="getBlogPage" resultMap="BaseResultMap">
+        SELECT DISTINCT
+            u.user_name as user_name,
+            u.image_path as image_path,
+            b.id,
+            b.title,
+            b.create_time,
+            b.views,
+            b.discuss_count
+        FROM
+            blog b
+        LEFT JOIN user u ON b.user_id=u.user_id
+        LEFT JOIN blog_tag bt ON bt.blog_id = b.id
+        <where>
+                b.delete_state = 1
+            <if test="blog.userId!= null and blog.userId != ''">
+                and b.user_id = #{blog.userId}
+            </if>
+            <if test="blog.userName != null and blog.userName != ''">
+                <bind name="userName" value="'%'+blog.userName+'%'"/>
+                and u.user_name like #{userName}
+            </if>
+            <if test="blog.title != null and blog.title != ''">
+                <bind name="title" value="'%'+blog.title+'%'"/>
+                and b.title like #{title}
+            </if>
+            <if test="blog.tagId!= null and blog.tagId != ''">
+                and bt.tag_id = #{blog.tagId}
+            </if>
+        </where>
+        order BY b.create_time desc
+    </select>
+
+    <select id="getBlogById" resultMap="BaseResultMap">
+        SELECT
+            b.*,
+            u.user_name,
+            u.image_path
+        FROM
+            blog b
+            LEFT JOIN user u ON b.user_id = u.user_id
+        WHERE b.id = #{id} and b.delete_state = 1
+    </select>
+    
+    <update id="addDiscussCount" parameterType="Integer">
+        UPDATE blog SET discuss_count = discuss_count+1
+        WHERE id=#{id}
+    </update>
+    
+    <update id="removeByUserName" parameterType="String">
+        UPDATE blog b
+        SET b.delete_state = 0
+        WHERE b.id = #{id} AND b.user_id = (select user_id from `user` WHERE user_name = #{name})
+    </update>
+
+</mapper>
